@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
-import 'pages/login_page.dart';
+import 'package:hunter_market/pages/home_page.dart';
+
 
 void main() {
-  runApp(HunterMarketApp());
+  runApp(const HunterApp());
 }
 
-class HunterMarketApp extends StatelessWidget {
+class HunterApp extends StatelessWidget {
+  const HunterApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Hunter Market',
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        scaffoldBackgroundColor: Colors.grey[100],
+      ),
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.green),
-      home: LoginPage(),
+      home:  HomePage(),
     );
   }
 }

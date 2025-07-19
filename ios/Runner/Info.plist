@@ -45,5 +45,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	 <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Este app precisa da sua localização para mostrar supermercados próximos.</string>
+
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>Precisamos da sua localização mesmo quando o app está em segundo plano.</string>
+
+  <!-- Permissão para rede local -->
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>O app precisa acessar a rede local para comunicação e depuração.</string>
+
+  <!-- Necessário para Google Maps funcionar no iOS (views nativas) -->
+  <key>io.flutter.embedded_views_preview</key>
+  <true/>
 </dict>
 </plist>
