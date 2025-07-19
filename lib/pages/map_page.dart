@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/google_places_service.dart';
 
 class MapPage extends StatefulWidget {
   @override
@@ -13,39 +14,17 @@ class _MapPageState extends State<MapPage> {
   GoogleMapController? _mapController;
   LocationData? _locationData;
   final Location _location = Location();
-
-  final List<Map<String, dynamic>> _supermercados = [
-    {
-      "nome": "Supermercado João",
-      "lat": -23.552,
-      "lng": -46.634,
-      "razaoSocial": "João Supermercados Ltda",
-      "cnpj": "12.345.678/0001-90",
-      "fotoUrl":
-          "https://maps.googleapis.com/maps/api/streetview?size=400x200&location=-23.552,-46.634&key=AIzaSyDiURjUuJ68dYpyM2Vpw182QDN8n4KZW2w"
-    },
-    {
-      "nome": "Supermercado Central",
-      "lat": -23.560,
-      "lng": -46.640,
-      "razaoSocial": "Central Comércio de Alimentos S.A.",
-      "cnpj": "98.765.432/0001-55",
-      "fotoUrl": "https://via.placeholder.com/400x200.png?text=Central+Store"
-    },
-    {
-      "nome": "Supermercado do Zé",
-      "lat": -23.545,
-      "lng": -46.625,
-      "razaoSocial": "Zé Distribuidora ME",
-      "cnpj": "11.222.333/0001-44",
-      "fotoUrl": "https://via.placeholder.com/400x200.png?text=Supermercado+do+Zé"
-    },
-  ];
+  List<Map<String, dynamic>> _supermercados = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchLocation();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _fetchLocation();
+    await _buscarSupermercados();
   }
 
   Future<void> _fetchLocation() async {
@@ -53,40 +32,33 @@ class _MapPageState extends State<MapPage> {
       final permission = await _location.hasPermission();
       if (permission == PermissionStatus.denied) {
         final granted = await _location.requestPermission();
-        if (granted != PermissionStatus.granted) {
-          print("⛔ Permissão negada");
-          return;
-        }
+        if (granted != PermissionStatus.granted) return;
       }
-
       final serviceEnabled = await _location.serviceEnabled();
       if (!serviceEnabled) {
         final enabled = await _location.requestService();
-        if (!enabled) {
-          print("⛔ Serviço de localização não ativado");
-          return;
-        }
+        if (!enabled) return;
       }
-
       final loc = await _location.getLocation();
-      print("📍 Localização retornada: ${loc.latitude}, ${loc.longitude}");
       setState(() => _locationData = loc);
-    } catch (e, s) {
-      print("💥 Erro no fetchLocation: $e");
-      print(s);
-    }
+    } catch (_) {}
   }
 
-  double _calculaDistancia(
-      double lat1, double lon1, double lat2, double lon2) {
+  Future<void> _buscarSupermercados() async {
+    if (_locationData == null) return;
+   final resultados = await GooglePlacesService.buscarSupermercadosProximos(
+  _locationData!.latitude!,
+  _locationData!.longitude!,
+);
+    setState(() => _supermercados = resultados);
+  }
+
+  double _calculaDistancia(double lat1, double lon1, double lat2, double lon2) {
     const raioTerra = 6371;
     final dLat = _toRad(lat2 - lat1);
     final dLon = _toRad(lon2 - lon1);
     final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_toRad(lat1)) *
-            cos(_toRad(lat2)) *
-            sin(dLon / 2) *
-            sin(dLon / 2);
+        cos(_toRad(lat1)) * cos(_toRad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return raioTerra * c;
   }
@@ -118,51 +90,25 @@ class _MapPageState extends State<MapPage> {
                 ),
               ),
               SizedBox(height: 12),
-
-              // Foto da loja
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
-                  mercado['fotoUrl'] ??
-                      'https://via.placeholder.com/400x200.png?text=Loja',
+                  mercado['fotoUrl'] ?? 'https://via.placeholder.com/400x200',
                   height: 150,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               ),
-
               SizedBox(height: 16),
-
-              Text(
-                mercado['nome'],
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-
+              Text(mercado['nome'],
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               SizedBox(height: 8),
-
-              Text(
-                "Razão Social: ${mercado['razaoSocial'] ?? 'Empresa Exemplo Ltda'}",
-                style: TextStyle(fontSize: 16),
-              ),
-
-              SizedBox(height: 4),
-
-              Text(
-                "CNPJ: ${mercado['cnpj'] ?? '00.000.000/0001-00'}",
-                style: TextStyle(fontSize: 16),
-              ),
-
+              Text("Endereço: ${mercado['endereco'] ?? 'N/D'}",
+                  style: TextStyle(fontSize: 16)),
               Spacer(),
-
               Center(
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    if (_locationData == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Localização atual não disponível")),
-                      );
-                      return;
-                    }
                     final origem =
                         '${_locationData!.latitude},${_locationData!.longitude}';
                     final destino = '${mercado["lat"]},${mercado["lng"]}';
@@ -172,19 +118,18 @@ class _MapPageState extends State<MapPage> {
                       await launchUrl(url);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Não foi possível abrir o Google Maps")),
+                        SnackBar(content: Text("Erro ao abrir Google Maps")),
                       );
                     }
                   },
                   icon: Icon(Icons.directions),
-                  label: Text("Traçar rota no Google Maps"),
+                  label: Text("Traçar rota"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                   ),
                 ),
               ),
-
               SizedBox(height: 20),
             ],
           ),
@@ -195,8 +140,6 @@ class _MapPageState extends State<MapPage> {
 
   @override
   Widget build(BuildContext context) {
-    print("📍 Localização atual: $_locationData");
-
     return Scaffold(
       appBar: AppBar(title: Text('Hunter Market')),
       body: _locationData == null
@@ -219,44 +162,47 @@ class _MapPageState extends State<MapPage> {
                   ),
                 ),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: _supermercados.length,
-                    itemBuilder: (context, index) {
-                      final mercado = _supermercados[index];
-                      final distancia = _calculaDistancia(
-                        _locationData!.latitude!,
-                        _locationData!.longitude!,
-                        mercado["lat"],
-                        mercado["lng"],
-                      );
-
-                      return Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: ElevatedButton(
-                          onPressed: () => _abrirDetalhesLoja(mercado),
-                          style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(mercado["nome"], style: TextStyle(fontSize: 16)),
-                              Text('${distancia.toStringAsFixed(2)} km'),
-                            ],
-                          ),
+                  child: _supermercados.isEmpty
+                      ? Center(child: Text('Nenhum supermercado encontrado'))
+                      : ListView.builder(
+                          itemCount: _supermercados.length,
+                          itemBuilder: (context, index) {
+                            final mercado = _supermercados[index];
+                            final distancia = _calculaDistancia(
+                              _locationData!.latitude!,
+                              _locationData!.longitude!,
+                              mercado["lat"],
+                              mercado["lng"],
+                            );
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              child: ElevatedButton(
+                                onPressed: () => _abrirDetalhesLoja(mercado),
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(mercado["nome"],
+                                        style: TextStyle(fontSize: 16)),
+                                    Text('${distancia.toStringAsFixed(2)} km'),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                )
+                ),
               ],
             ),
     );
