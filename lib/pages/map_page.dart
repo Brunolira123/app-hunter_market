@@ -66,77 +66,108 @@ class _MapPageState extends State<MapPage> {
   double _toRad(double grau) => grau * pi / 180;
 
   void _abrirDetalhesLoja(Map<String, dynamic> mercado) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (context) => FractionallySizedBox(
-        heightFactor: 0.6,
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 50,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+    ),
+    builder: (context) => FractionallySizedBox(
+      heightFactor: 0.6,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  mercado['fotoUrl'] ?? 'https://via.placeholder.com/400x200',
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+            ),
+            SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                mercado['fotoUrl'] ?? 'https://via.placeholder.com/400x200',
+                height: 150,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              mercado['nome'],
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              "Endereço: ${mercado['endereco'] ?? 'N/D'}",
+              style: TextStyle(fontSize: 16),
+            ),
+            Spacer(),
+
+            // 👉 Botão para Traçar Rota
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final origem =
+                      '${_locationData!.latitude},${_locationData!.longitude}';
+                  final destino = '${mercado["lat"]},${mercado["lng"]}';
+                  final url = Uri.parse(
+                      'https://www.google.com/maps/dir/?api=1&origin=$origem&destination=$destino&travelmode=driving');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Erro ao abrir Google Maps")),
+                    );
+                  }
+                },
+                icon: Icon(Icons.directions),
+                label: Text("Traçar rota"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),
-              SizedBox(height: 16),
-              Text(mercado['nome'],
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              SizedBox(height: 8),
-              Text("Endereço: ${mercado['endereco'] ?? 'N/D'}",
-                  style: TextStyle(fontSize: 16)),
-              Spacer(),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final origem =
-                        '${_locationData!.latitude},${_locationData!.longitude}';
-                    final destino = '${mercado["lat"]},${mercado["lng"]}';
-                    final url = Uri.parse(
-                        'https://www.google.com/maps/dir/?api=1&origin=$origem&destination=$destino&travelmode=driving');
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Erro ao abrir Google Maps")),
-                      );
-                    }
-                  },
-                  icon: Icon(Icons.directions),
-                  label: Text("Traçar rota"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  ),
+            ),
+
+            SizedBox(height: 12),
+
+            // 👉 Botão para abrir o CRM
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final url = Uri.parse(
+                      'https://vrsoftware.bitrix24.com.br/crm/lead/list/');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Erro ao abrir link do CRM")),
+                    );
+                  }
+                },
+                icon: Icon(Icons.link),
+                label: Text("Ver no CRM"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),
-              SizedBox(height: 20),
-            ],
-          ),
+            ),
+            SizedBox(height: 20),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
