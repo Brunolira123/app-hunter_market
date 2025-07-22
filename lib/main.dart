@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hunter_market/pages/home_page.dart';
-
+import 'pages/login_page.dart';
 
 void main() {
   runApp(const HunterApp());
@@ -18,7 +17,7 @@ class HunterApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[100],
       ),
       debugShowCheckedModeBanner: false,
-      home:  HomePage(),
+      home: LoginPage(),
     );
   }
 }

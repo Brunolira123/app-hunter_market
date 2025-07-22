@@ -1,49 +1,168 @@
 import 'package:flutter/material.dart';
-import 'map_page.dart';
+import 'package:hunter_market/pages/home_page.dart';
+import '../services/auth_service.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
-  void _iniciarBusca(BuildContext context) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => MapPage()));
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _usuarioController = TextEditingController();
+  final _senhaController = TextEditingController();
+  final _authService = AuthService();
+  bool _loading = false;
+
+  void _fazerLogin() async {
+    setState(() => _loading = true);
+
+    final sucesso = await _authService.login(
+      _usuarioController.text.trim(),
+      _senhaController.text.trim(),
+    );
+
+    setState(() => _loading = false);
+
+    if (sucesso) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => HomePage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Center(child: Text("Usuário ou senha inválidos")),
+          backgroundColor: Colors.deepOrange,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Dashboard')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.store_mall_directory, size: 80, color: Colors.green),
-              SizedBox(height: 24),
-              Text(
-                'Bem-vindo ao Hunter Market!',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Aqui você pode encontrar mercados próximos e registrar visitas.',
-                style: TextStyle(fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 32),
-              ElevatedButton.icon(
-                icon: Icon(Icons.search),
-                label: Text('Iniciar busca por mercados'),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  textStyle: TextStyle(fontSize: 18),
+      body: Stack(
+        children: [
+          // 📸 Imagem de fundo
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/images/fundo-login.jpeg"),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.5),
+                  BlendMode.darken,
                 ),
-                onPressed: () => _iniciarBusca(context),
               ),
-            ],
+            ),
           ),
-        ),
+
+          // 🧾 Conteúdo principal
+          Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Card(
+                  color: Colors.white.withOpacity(0.9),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  elevation: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Hunter Market',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: const Color.fromARGB(255, 221, 90, 3),
+                          ),
+                        ),
+                        SizedBox(height: 32),
+                        TextField(
+                          controller: _usuarioController,
+                          decoration: InputDecoration(
+                            labelText: 'Usuário',
+                            prefixIcon: Icon(Icons.person),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        TextField(
+                          controller: _senhaController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: 'Senha',
+                            prefixIcon: Icon(Icons.lock),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : _fazerLogin,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                221,
+                                90,
+                                3,
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              textStyle: TextStyle(fontSize: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _loading
+                                ? CircularProgressIndicator(color: Colors.black)
+                                : Text(
+                                    "Entrar",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ✨ Footer no fundo da tela
+          Positioned(
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                "Tecnologia que conecta você ao mercado.",
+                softWrap: true,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[300],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
