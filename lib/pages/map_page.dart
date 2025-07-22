@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'dart:math';
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
@@ -46,10 +48,10 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _buscarSupermercados() async {
     if (_locationData == null) return;
-   final resultados = await GooglePlacesService.buscarSupermercadosProximos(
-  _locationData!.latitude!,
-  _locationData!.longitude!,
-);
+    final resultados = await GooglePlacesService.buscarSupermercadosProximos(
+      _locationData!.latitude!,
+      _locationData!.longitude!,
+    );
     setState(() => _supermercados = resultados);
   }
 
@@ -57,7 +59,8 @@ class _MapPageState extends State<MapPage> {
     const raioTerra = 6371;
     final dLat = _toRad(lat2 - lat1);
     final dLon = _toRad(lon2 - lon1);
-    final a = sin(dLat / 2) * sin(dLat / 2) +
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(_toRad(lat1)) * cos(_toRad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return raioTerra * c;
@@ -66,108 +69,124 @@ class _MapPageState extends State<MapPage> {
   double _toRad(double grau) => grau * pi / 180;
 
   void _abrirDetalhesLoja(Map<String, dynamic> mercado) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-    ),
-    builder: (context) => FractionallySizedBox(
-      heightFactor: 0.6,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 50,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) => FractionallySizedBox(
+        heightFactor: 0.6,
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                mercado['fotoUrl'] ?? 'https://via.placeholder.com/400x200',
-                height: 150,
-                width: double.infinity,
-                fit: BoxFit.cover,
+              SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  mercado['fotoUrl'] ?? 'https://via.placeholder.com/400x200',
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              mercado['nome'],
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              "Endereço: ${mercado['endereco'] ?? 'N/D'}",
-              style: TextStyle(fontSize: 16),
-            ),
-            Spacer(),
+              SizedBox(height: 16),
+              Text(
+                mercado['nome'],
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "Endereço: ${mercado['endereco'] ?? 'N/D'}",
+                style: TextStyle(fontSize: 16),
+              ),
+              Spacer(),
 
-            // 👉 Botão para Traçar Rota
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final origem =
-                      '${_locationData!.latitude},${_locationData!.longitude}';
-                  final destino = '${mercado["lat"]},${mercado["lng"]}';
-                  final url = Uri.parse(
-                      'https://www.google.com/maps/dir/?api=1&origin=$origem&destination=$destino&travelmode=driving');
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Erro ao abrir Google Maps")),
+              // ✅ Botão Traçar Rota
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final origem =
+                        '${_locationData!.latitude},${_locationData!.longitude}';
+                    final destino = '${mercado["lat"]},${mercado["lng"]}';
+                    final url = Uri.parse(
+                      'https://www.google.com/maps/dir/?api=1&origin=$origem&destination=$destino&travelmode=driving',
                     );
-                  }
-                },
-                icon: Icon(Icons.directions),
-                label: Text("Traçar rota"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Erro ao abrir Google Maps")),
+                      );
+                    }
+                  },
+                  icon: Icon(Icons.directions),
+                  label: Text("Traçar rota"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  ),
                 ),
               ),
-            ),
 
-            SizedBox(height: 12),
+              SizedBox(height: 12),
 
-            // 👉 Botão para abrir o CRM
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final url = Uri.parse(
-                      'https://vrsoftware.bitrix24.com.br/crm/lead/list/');
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Erro ao abrir link do CRM")),
-                    );
-                  }
-                },
-                icon: Icon(Icons.link),
-                label: Text("Ver no CRM"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              // ✅ Botão Ver no CRM
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => _abrirLinkCrm(context),
+                  icon: Icon(Icons.link),
+                  label: Text("Ver no CRM"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-          ],
+
+              SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Future<void> _abrirLinkCrm(BuildContext context) async {
+    const urlString = 'https://vrsoftware.bitrix24.com.br/crm/lead/list/';
+    final url = Uri.parse(urlString);
+
+    try {
+      if (Platform.isAndroid) {
+        final intent = AndroidIntent(action: 'action_view', data: urlString);
+        await intent.launch();
+      } else if (Platform.isIOS) {
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Não foi possível abrir o link.')),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao tentar abrir o link: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +226,9 @@ class _MapPageState extends State<MapPage> {
                             );
                             return Padding(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               child: ElevatedButton(
                                 onPressed: () => _abrirDetalhesLoja(mercado),
                                 style: ElevatedButton.styleFrom(
@@ -217,15 +238,19 @@ class _MapPageState extends State<MapPage> {
                                   elevation: 2,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(color: Colors.grey.shade300),
+                                    side: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
                                 ),
                                 child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(mercado["nome"],
-                                        style: TextStyle(fontSize: 16)),
+                                    Text(
+                                      mercado["nome"],
+                                      style: TextStyle(fontSize: 16),
+                                    ),
                                     Text('${distancia.toStringAsFixed(2)} km'),
                                   ],
                                 ),
