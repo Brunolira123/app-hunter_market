@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hunter_market/pages/home_page.dart';
 import '../services/auth_service.dart';
 
@@ -18,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   void _fazerLogin() async {
     setState(() => _loading = true);
 
-    final sucesso = await _authService.login(
+    final sucesso = await _authService.loginComUsuarioSenha(
       _usuarioController.text.trim(),
       _senhaController.text.trim(),
     );
@@ -32,9 +33,30 @@ class _LoginPageState extends State<LoginPage> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Center(child: Text("Usuário ou senha inválidos")),
           backgroundColor: Colors.deepOrange,
+        ),
+      );
+    }
+  }
+
+  void _loginComGoogle() async {
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser != null) {
+        // Aqui você pode salvar os dados do usuário ou navegar direto
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => HomePage()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Center(child: Text("Erro ao fazer login com Google")),
+          backgroundColor: Colors.redAccent,
         ),
       );
     }
@@ -45,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // 📸 Imagem de fundo
+          // Fundo com imagem
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
@@ -59,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // 🧾 Conteúdo principal
+          // Conteúdo principal
           Center(
             child: SingleChildScrollView(
               child: Padding(
@@ -83,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
                             color: const Color.fromARGB(255, 221, 90, 3),
                           ),
                         ),
-                        SizedBox(height: 32),
+                        const SizedBox(height: 32),
                         TextField(
                           controller: _usuarioController,
                           decoration: InputDecoration(
@@ -94,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         TextField(
                           controller: _senhaController,
                           obscureText: true,
@@ -106,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 30),
+                        const SizedBox(height: 30),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -118,15 +140,17 @@ class _LoginPageState extends State<LoginPage> {
                                 90,
                                 3,
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              textStyle: TextStyle(fontSize: 18),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(fontSize: 18),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             child: _loading
-                                ? CircularProgressIndicator(color: Colors.black)
-                                : Text(
+                                ? const CircularProgressIndicator(
+                                    color: Colors.black,
+                                  )
+                                : const Text(
                                     "Entrar",
                                     style: TextStyle(
                                       color: Colors.black,
@@ -136,6 +160,17 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        // Botão Google
+                        IconButton(
+                          onPressed: _loginComGoogle,
+                          icon: Image.asset(
+                            'assets/images/transferir.png', // ✅ coloque seu ícone aqui
+                            height: 40,
+                            width: 40,
+                          ),
+                          tooltip: 'Entrar com Google',
+                        ),
                       ],
                     ),
                   ),
@@ -144,7 +179,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // ✨ Footer no fundo da tela
+          // Rodapé
           Positioned(
             bottom: 20,
             left: 0,

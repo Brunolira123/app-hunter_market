@@ -5,9 +5,16 @@ class GooglePlacesService {
   static const _apiKey = 'AIzaSyDiURjUuJ68dYpyM2Vpw182QDN8n4KZW2w';
 
   static Future<List<Map<String, dynamic>>> buscarSupermercadosProximos(
-      double lat, double lng) async {
+    double lat,
+    double lng,
+  ) async {
     final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$lat,$lng&radius=2000&type=supermarket&key=$_apiKey');
+      'https://maps.googleapis.com/maps/api/place/textsearch/json'
+      '?query=supermercado'
+      '&location=$lat,$lng'
+      '&radius=50000' // até 50 km
+      '&key=$_apiKey',
+    );
 
     final response = await http.get(url);
     if (response.statusCode == 200) {
@@ -22,7 +29,7 @@ class GooglePlacesService {
           'fotoUrl': place['photos'] != null
               ? _montarUrlFoto(place['photos'][0]['photo_reference'])
               : 'https://via.placeholder.com/400x200.png?text=Sem+Foto',
-          'endereco': place['vicinity'] ?? '',
+          'endereco': place['formatted_address'] ?? '',
           'placeId': place['place_id'],
         };
       }).toList();

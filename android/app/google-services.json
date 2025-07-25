@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "736561562937",
+    "project_id": "huntermarket-f3270",
+    "storage_bucket": "huntermarket-f3270.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736561562937:android:2d68bce3a397e6794494e8",
+        "android_client_info": {
+          "package_name": "com.example.hunter_market"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCO7aDdOZdBSTWvZp7Iq1-WECTnEjtpXr0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,16 +2,16 @@
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
   <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
 
   <application
       android:label="hunter_market"
       android:name="${applicationName}"
       android:icon="@mipmap/ic_launcher">
-
-      <!-- ✅ SUA CHAVE API AQUI -->
+      
       <meta-data
           android:name="com.google.android.geo.API_KEY"
-          android:value="AIzaSyDiURjUuJ68dYpyM2Vpw182QDN8n4KZW2w" />
+          android:value="SUA_API_KEY_AQUI" />
 
       <activity
           android:name=".MainActivity"

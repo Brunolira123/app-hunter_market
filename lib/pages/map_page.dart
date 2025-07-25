@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
+import 'package:location/location.dart' as loc;
 import 'package:url_launcher/url_launcher.dart';
 import '../services/google_places_service.dart';
 
@@ -14,9 +14,10 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   GoogleMapController? _mapController;
-  LocationData? _locationData;
-  final Location _location = Location();
+  loc.LocationData? _locationData;
+  final loc.Location _location = loc.Location();
   List<Map<String, dynamic>> _supermercados = [];
+  final Set<Marker> _marcadores = {};
 
   @override
   void initState() {
@@ -32,27 +33,55 @@ class _MapPageState extends State<MapPage> {
   Future<void> _fetchLocation() async {
     try {
       final permission = await _location.hasPermission();
-      if (permission == PermissionStatus.denied) {
+      if (permission == loc.PermissionStatus.denied) {
         final granted = await _location.requestPermission();
-        if (granted != PermissionStatus.granted) return;
+        if (granted != loc.PermissionStatus.granted) return;
       }
       final serviceEnabled = await _location.serviceEnabled();
       if (!serviceEnabled) {
         final enabled = await _location.requestService();
         if (!enabled) return;
       }
-      final loc = await _location.getLocation();
-      setState(() => _locationData = loc);
+      final locData = await _location.getLocation();
+      setState(() => _locationData = locData);
     } catch (_) {}
   }
 
   Future<void> _buscarSupermercados() async {
     if (_locationData == null) return;
+
     final resultados = await GooglePlacesService.buscarSupermercadosProximos(
       _locationData!.latitude!,
       _locationData!.longitude!,
     );
-    setState(() => _supermercados = resultados);
+
+    final filtrados = resultados.where((mercado) {
+      final dist = _calculaDistancia(
+        _locationData!.latitude!,
+        _locationData!.longitude!,
+        mercado["lat"],
+        mercado["lng"],
+      );
+      return dist <= 50;
+    }).toList();
+
+    setState(() {
+      _supermercados = filtrados;
+      _marcadores.clear();
+      for (var mercado in filtrados) {
+        _marcadores.add(
+          Marker(
+            markerId: MarkerId(mercado["nome"] ?? UniqueKey().toString()),
+            position: LatLng(mercado["lat"], mercado["lng"]),
+            infoWindow: InfoWindow(
+              title: mercado["nome"],
+              snippet: "Toque para mais",
+              onTap: () => _abrirDetalhesLoja(mercado),
+            ),
+          ),
+        );
+      }
+    });
   }
 
   double _calculaDistancia(double lat1, double lon1, double lat2, double lon2) {
@@ -113,8 +142,6 @@ class _MapPageState extends State<MapPage> {
                 style: TextStyle(fontSize: 16),
               ),
               Spacer(),
-
-              // ✅ Botão Traçar Rota
               Center(
                 child: ElevatedButton.icon(
                   onPressed: () async {
@@ -140,10 +167,7 @@ class _MapPageState extends State<MapPage> {
                   ),
                 ),
               ),
-
               SizedBox(height: 12),
-
-              // ✅ Botão Ver no CRM
               Center(
                 child: ElevatedButton.icon(
                   onPressed: () => _abrirLinkCrm(context),
@@ -155,7 +179,6 @@ class _MapPageState extends State<MapPage> {
                   ),
                 ),
               ),
-
               SizedBox(height: 20),
             ],
           ),
@@ -209,6 +232,7 @@ class _MapPageState extends State<MapPage> {
                     ),
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
+                    markers: _marcadores,
                   ),
                 ),
                 Expanded(
