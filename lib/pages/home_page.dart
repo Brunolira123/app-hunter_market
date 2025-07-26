@@ -1,5 +1,6 @@
 // Arquivo: home_page.dart
 import 'package:flutter/material.dart';
+import 'package:hunter_market/pages/map_page.dart';
 import 'package:hunter_market/widgets/grafico_visitas.dart';
 import 'package:hunter_market/widgets/header_usuario.dart';
 import 'package:hunter_market/widgets/botao_busca.dart';
@@ -7,7 +8,6 @@ import 'package:hunter_market/controller/dashboard_controller.dart';
 import 'package:hunter_market/widgets/modal_confirmacao_visita.dart';
 import 'package:hunter_market/widgets/secao_notificacoes.dart';
 import 'package:hunter_market/widgets/secao_visitas_recentes.dart';
-import 'map_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

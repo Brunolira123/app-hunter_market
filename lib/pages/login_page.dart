@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hunter_market/pages/home_page.dart';
 import '../services/auth_service.dart';
 
@@ -36,27 +35,6 @@ class _LoginPageState extends State<LoginPage> {
         const SnackBar(
           content: Center(child: Text("Usuário ou senha inválidos")),
           backgroundColor: Colors.deepOrange,
-        ),
-      );
-    }
-  }
-
-  void _loginComGoogle() async {
-    try {
-      final googleUser = await GoogleSignIn().signIn();
-
-      if (googleUser != null) {
-        // Aqui você pode salvar os dados do usuário ou navegar direto
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => HomePage()),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Center(child: Text("Erro ao fazer login com Google")),
-          backgroundColor: Colors.redAccent,
         ),
       );
     }
@@ -161,16 +139,8 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
+
                         // Botão Google
-                        IconButton(
-                          onPressed: _loginComGoogle,
-                          icon: Image.asset(
-                            'assets/images/transferir.png', // ✅ coloque seu ícone aqui
-                            height: 40,
-                            width: 40,
-                          ),
-                          tooltip: 'Entrar com Google',
-                        ),
                       ],
                     ),
                   ),

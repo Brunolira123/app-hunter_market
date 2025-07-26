@@ -16,8 +16,12 @@ class _MapPageState extends State<MapPage> {
   GoogleMapController? _mapController;
   loc.LocationData? _locationData;
   final loc.Location _location = loc.Location();
+
   List<Map<String, dynamic>> _supermercados = [];
   final Set<Marker> _marcadores = {};
+  final Set<Circle> _circulos = {};
+
+  double _raioKm = 10.0; // raio padrão 10km
 
   @override
   void initState() {
@@ -44,6 +48,7 @@ class _MapPageState extends State<MapPage> {
       }
       final locData = await _location.getLocation();
       setState(() => _locationData = locData);
+      _atualizarCirculo();
     } catch (_) {}
   }
 
@@ -62,8 +67,25 @@ class _MapPageState extends State<MapPage> {
         mercado["lat"],
         mercado["lng"],
       );
-      return dist <= 50;
+      return dist <= _raioKm;
     }).toList();
+
+    // Ordena do mais próximo para o mais distante
+    filtrados.sort((a, b) {
+      final distA = _calculaDistancia(
+        _locationData!.latitude!,
+        _locationData!.longitude!,
+        a["lat"],
+        a["lng"],
+      );
+      final distB = _calculaDistancia(
+        _locationData!.latitude!,
+        _locationData!.longitude!,
+        b["lat"],
+        b["lng"],
+      );
+      return distA.compareTo(distB);
+    });
 
     setState(() {
       _supermercados = filtrados;
@@ -96,6 +118,32 @@ class _MapPageState extends State<MapPage> {
   }
 
   double _toRad(double grau) => grau * pi / 180;
+
+  void _atualizarCirculo() {
+    if (_locationData == null) return;
+
+    setState(() {
+      _circulos.clear();
+      _circulos.add(
+        Circle(
+          circleId: CircleId('raio_pesquisa'),
+          center: LatLng(_locationData!.latitude!, _locationData!.longitude!),
+          radius: _raioKm * 1000, // metros
+          fillColor: Colors.orange.withOpacity(0.2),
+          strokeColor: Colors.orange,
+          strokeWidth: 2,
+        ),
+      );
+    });
+  }
+
+  void _onRaioChanged(double novoRaio) {
+    setState(() {
+      _raioKm = novoRaio;
+    });
+    _atualizarCirculo();
+    _buscarSupermercados();
+  }
 
   void _abrirDetalhesLoja(Map<String, dynamic> mercado) {
     showModalBottomSheet(
@@ -220,7 +268,7 @@ class _MapPageState extends State<MapPage> {
           : Column(
               children: [
                 Container(
-                  height: MediaQuery.of(context).size.height * 0.4,
+                  height: MediaQuery.of(context).size.height * 0.5,
                   child: GoogleMap(
                     onMapCreated: (controller) => _mapController = controller,
                     initialCameraPosition: CameraPosition(
@@ -233,6 +281,33 @@ class _MapPageState extends State<MapPage> {
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
                     markers: _marcadores,
+                    circles: _circulos,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Raio de pesquisa: ${_raioKm.toStringAsFixed(1)} km',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange[800],
+                        ),
+                      ),
+                      Slider(
+                        value: _raioKm,
+                        min: 1,
+                        max: 50,
+                        divisions: 49,
+                        label: '${_raioKm.toStringAsFixed(1)} km',
+                        activeColor: Colors.orange,
+                        onChanged: _onRaioChanged,
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(

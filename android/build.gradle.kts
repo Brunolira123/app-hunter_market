@@ -8,10 +8,6 @@ buildscript {
         google()
         mavenCentral()
     }
-    dependencies {
-        // Plugin do Google Services (obrigatório para Firebase)
-        classpath("com.google.gms:google-services:4.3.15")
-    }
 }
 
 allprojects {
