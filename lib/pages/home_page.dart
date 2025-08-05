@@ -1,6 +1,7 @@
 // Arquivo: home_page.dart
 import 'package:flutter/material.dart';
 import 'package:hunter_market/pages/map_page.dart';
+import 'package:hunter_market/pages/perfil_page.dart';
 import 'package:hunter_market/widgets/grafico_visitas.dart';
 import 'package:hunter_market/widgets/header_usuario.dart';
 import 'package:hunter_market/widgets/botao_busca.dart';
@@ -18,8 +19,17 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final DashboardController _controller = DashboardController();
-  final String nomeUsuario = "Bruno";
   String cidadeAtual = "Carregando...";
+
+  final String nomeUsuario = "Bruno";
+  final String emailUsuario = "bruno@email.com";
+  List<String> categoriasSelecionadas = [
+    'mercado',
+    'supermercado',
+    'hipermercado',
+    'hortifruti',
+    'padaria',
+  ];
 
   final List<int> _visitasMock = [0, 2, 4, 1, 3, 5, 2];
   final List<String> _notificacoes = [
@@ -101,19 +111,41 @@ class _HomePageState extends State<HomePage> {
                       nome: nomeUsuario,
                       saudacao: saudacao,
                       cidade: cidadeAtual,
+                      onFotoClick: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProfilePage(
+                              nome: nomeUsuario,
+                              email: 'bruno@email.com',
+                              imagemUrl: "https://via.placeholder.com/150",
+                              organizacao: 'VR Interior Paulista',
+                              funcao: 'ADM',
+                              categoriasSelecionadas: const [
+                                'mercado',
+                                'supermercado',
+                                'hipermercado',
+                                'hortifruti',
+                                'padaria',
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     const Text(
                       "Pronto para visitar mais mercados hoje?",
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     BotaoBusca(onTap: _iniciarBusca),
                     const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: _mostrarModalConfirmacaoVisita,
-                      child: const Text("Simular chegada ao mercado"),
-                    ),
+
                     const SizedBox(height: 32),
                     GraficoVisitas(visitas: _visitasMock),
                     const SizedBox(height: 32),

@@ -1,47 +1,61 @@
+// widgets/header_usuario.dart
 import 'package:flutter/material.dart';
 
 class HeaderUsuario extends StatelessWidget {
   final String nome;
-  final String cidade;
   final String saudacao;
+  final String cidade;
+  final VoidCallback onFotoClick;
 
   const HeaderUsuario({
     super.key,
     required this.nome,
-    required this.cidade,
     required this.saudacao,
+    required this.cidade,
+    required this.onFotoClick,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Olá, $nome 👋',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "$saudacao, $nome 👋",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.white70, size: 18),
-                SizedBox(width: 4),
-                Text(cidade, style: TextStyle(color: Colors.white70)),
-              ],
-            ),
-          ],
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: Colors.black54,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    cidade,
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        CircleAvatar(
-          backgroundColor: Colors.white,
-          radius: 22,
-          child: Icon(Icons.person, color: Colors.green.shade700),
+        GestureDetector(
+          onTap: onFotoClick,
+          child: const CircleAvatar(
+            radius: 24,
+            backgroundImage: AssetImage(
+              "assets/images/foto-perfil.jpg",
+            ), // substitua por NetworkImage se for dinâmico
+          ),
         ),
       ],
     );

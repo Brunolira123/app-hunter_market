@@ -21,7 +21,7 @@ class _MapPageState extends State<MapPage> {
   final Set<Marker> _marcadores = {};
   final Set<Circle> _circulos = {};
 
-  double _raioKm = 10.0; // raio padrão 10km
+  double _raioKm = 10.0; // padrão 10km
 
   @override
   void initState() {
@@ -70,7 +70,6 @@ class _MapPageState extends State<MapPage> {
       return dist <= _raioKm;
     }).toList();
 
-    // Ordena do mais próximo para o mais distante
     filtrados.sort((a, b) {
       final distA = _calculaDistancia(
         _locationData!.latitude!,
@@ -128,7 +127,7 @@ class _MapPageState extends State<MapPage> {
         Circle(
           circleId: CircleId('raio_pesquisa'),
           center: LatLng(_locationData!.latitude!, _locationData!.longitude!),
-          radius: _raioKm * 1000, // metros
+          radius: _raioKm * 1000, // em metros
           fillColor: Colors.orange.withOpacity(0.2),
           strokeColor: Colors.orange,
           strokeWidth: 2,
