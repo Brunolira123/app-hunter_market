@@ -7,12 +7,13 @@ class GooglePlacesService {
   static Future<List<Map<String, dynamic>>> buscarSupermercadosProximos(
     double lat,
     double lng,
+    double raioMetros, // ← raio agora é dinâmico
   ) async {
     final url = Uri.parse(
-      'https://maps.googleapis.com/maps/api/place/textsearch/json'
-      '?query=supermercado'
-      '&location=$lat,$lng'
-      '&radius=50000' // até 50 km
+      'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
+      '?location=$lat,$lng'
+      '&radius=$raioMetros'
+      '&type=supermarket'
       '&key=$_apiKey',
     );
 
@@ -29,7 +30,7 @@ class GooglePlacesService {
           'fotoUrl': place['photos'] != null
               ? _montarUrlFoto(place['photos'][0]['photo_reference'])
               : 'https://via.placeholder.com/400x200.png?text=Sem+Foto',
-          'endereco': place['formatted_address'] ?? '',
+          'endereco': place['vicinity'] ?? '',
           'placeId': place['place_id'],
         };
       }).toList();
@@ -39,6 +40,7 @@ class GooglePlacesService {
   }
 
   static String _montarUrlFoto(String reference) {
-    return 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$reference&key=$_apiKey';
+    return 'https://maps.googleapis.com/maps/api/place/photo'
+        '?maxwidth=400&photoreference=$reference&key=$_apiKey';
   }
 }

@@ -21,7 +21,7 @@ class _MapPageState extends State<MapPage> {
   final Set<Marker> _marcadores = {};
   final Set<Circle> _circulos = {};
 
-  double _raioKm = 10.0; // padrão 10km
+  double _raioKm = 10.0;
 
   @override
   void initState() {
@@ -55,48 +55,44 @@ class _MapPageState extends State<MapPage> {
   Future<void> _buscarSupermercados() async {
     if (_locationData == null) return;
 
+    final lat = _locationData!.latitude!;
+    final lng = _locationData!.longitude!;
+    final raioMetros = _raioKm * 1000;
+
     final resultados = await GooglePlacesService.buscarSupermercadosProximos(
-      _locationData!.latitude!,
-      _locationData!.longitude!,
+      lat,
+      lng,
+      raioMetros,
     );
 
     final filtrados = resultados.where((mercado) {
-      final dist = _calculaDistancia(
-        _locationData!.latitude!,
-        _locationData!.longitude!,
-        mercado["lat"],
-        mercado["lng"],
-      );
+      if (mercado["lat"] == null || mercado["lng"] == null) return false;
+
+      final dist = _calculaDistancia(lat, lng, mercado["lat"], mercado["lng"]);
       return dist <= _raioKm;
     }).toList();
 
     filtrados.sort((a, b) {
-      final distA = _calculaDistancia(
-        _locationData!.latitude!,
-        _locationData!.longitude!,
-        a["lat"],
-        a["lng"],
-      );
-      final distB = _calculaDistancia(
-        _locationData!.latitude!,
-        _locationData!.longitude!,
-        b["lat"],
-        b["lng"],
-      );
+      final distA = _calculaDistancia(lat, lng, a["lat"], a["lng"]);
+      final distB = _calculaDistancia(lat, lng, b["lat"], b["lng"]);
       return distA.compareTo(distB);
     });
 
     setState(() {
       _supermercados = filtrados;
       _marcadores.clear();
+
       for (var mercado in filtrados) {
         _marcadores.add(
           Marker(
-            markerId: MarkerId(mercado["nome"] ?? UniqueKey().toString()),
+            markerId: MarkerId(mercado["placeId"] ?? UniqueKey().toString()),
             position: LatLng(mercado["lat"], mercado["lng"]),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueOrange,
+            ),
             infoWindow: InfoWindow(
               title: mercado["nome"],
-              snippet: "Toque para mais",
+              snippet: "Toque para ver mais",
               onTap: () => _abrirDetalhesLoja(mercado),
             ),
           ),
@@ -127,7 +123,7 @@ class _MapPageState extends State<MapPage> {
         Circle(
           circleId: CircleId('raio_pesquisa'),
           center: LatLng(_locationData!.latitude!, _locationData!.longitude!),
-          radius: _raioKm * 1000, // em metros
+          radius: _raioKm * 1000,
           fillColor: Colors.orange.withOpacity(0.2),
           strokeColor: Colors.orange,
           strokeWidth: 2,
@@ -137,9 +133,7 @@ class _MapPageState extends State<MapPage> {
   }
 
   void _onRaioChanged(double novoRaio) {
-    setState(() {
-      _raioKm = novoRaio;
-    });
+    setState(() => _raioKm = novoRaio);
     _atualizarCirculo();
     _buscarSupermercados();
   }
@@ -148,86 +142,95 @@ class _MapPageState extends State<MapPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (context) => FractionallySizedBox(
-        heightFactor: 0.6,
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 50,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(12),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.65,
+        maxChildSize: 0.85,
+        minChildSize: 0.4,
+        builder: (_, controller) => SingleChildScrollView(
+          controller: controller,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  mercado['fotoUrl'] ?? 'https://via.placeholder.com/400x200',
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                mercado['nome'],
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                "Endereço: ${mercado['endereco'] ?? 'N/D'}",
-                style: TextStyle(fontSize: 16),
-              ),
-              Spacer(),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final origem =
-                        '${_locationData!.latitude},${_locationData!.longitude}';
-                    final destino = '${mercado["lat"]},${mercado["lng"]}';
-                    final url = Uri.parse(
-                      'https://www.google.com/maps/dir/?api=1&origin=$origem&destination=$destino&travelmode=driving',
-                    );
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Erro ao abrir Google Maps")),
-                      );
-                    }
-                  },
-                  icon: Icon(Icons.directions),
-                  label: Text("Traçar rota"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    mercado['fotoUrl'],
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                   ),
                 ),
-              ),
-              SizedBox(height: 12),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () => _abrirLinkCrm(context),
-                  icon: Icon(Icons.link),
-                  label: Text("Ver no CRM"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  ),
+                SizedBox(height: 16),
+                Text(
+                  mercado['nome'],
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-              ),
-              SizedBox(height: 20),
-            ],
+                SizedBox(height: 8),
+                Text(
+                  "Endereço: ${mercado['endereco'] ?? 'N/D'}",
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final origem =
+                            '${_locationData!.latitude},${_locationData!.longitude}';
+                        final destino = '${mercado["lat"]},${mercado["lng"]}';
+                        final url = Uri.parse(
+                          'https://www.google.com/maps/dir/?api=1&origin=$origem&destination=$destino&travelmode=driving',
+                        );
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }
+                      },
+                      icon: Icon(Icons.navigation),
+                      label: Text("Rota"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => _abrirLinkCrm(context),
+                      icon: Icon(Icons.open_in_browser),
+                      label: Text("CRM"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -245,23 +248,22 @@ class _MapPageState extends State<MapPage> {
       } else if (Platform.isIOS) {
         if (await canLaunchUrl(url)) {
           await launchUrl(url, mode: LaunchMode.externalApplication);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Não foi possível abrir o link.')),
-          );
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao tentar abrir o link: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao abrir link: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Hunter Market')),
+      appBar: AppBar(
+        title: Text('Hunter Market'),
+        backgroundColor: Colors.orange,
+      ),
       body: _locationData == null
           ? Center(child: CircularProgressIndicator())
           : Column(
@@ -291,7 +293,7 @@ class _MapPageState extends State<MapPage> {
                   child: Column(
                     children: [
                       Text(
-                        'Raio de pesquisa: ${_raioKm.toStringAsFixed(1)} km',
+                        'Raio: ${_raioKm.toStringAsFixed(1)} km',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.orange[800],
@@ -311,7 +313,7 @@ class _MapPageState extends State<MapPage> {
                 ),
                 Expanded(
                   child: _supermercados.isEmpty
-                      ? Center(child: Text('Nenhum supermercado encontrado'))
+                      ? Center(child: Text('Nenhum mercado encontrado'))
                       : ListView.builder(
                           itemCount: _supermercados.length,
                           itemBuilder: (context, index) {
@@ -322,36 +324,38 @@ class _MapPageState extends State<MapPage> {
                               mercado["lat"],
                               mercado["lng"],
                             );
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
+                            return Card(
+                              margin: EdgeInsets.symmetric(
                                 horizontal: 16,
-                                vertical: 8,
+                                vertical: 6,
                               ),
-                              child: ElevatedButton(
-                                onPressed: () => _abrirDetalhesLoja(mercado),
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 16),
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 4,
+                              child: ListTile(
+                                onTap: () => _abrirDetalhesLoja(mercado),
+                                contentPadding: EdgeInsets.all(12),
+                                leading: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    mercado['fotoUrl'],
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      mercado["nome"],
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                    Text('${distancia.toStringAsFixed(2)} km'),
-                                  ],
+                                title: Text(
+                                  mercado["nome"],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
+                                subtitle: Text(
+                                  '${distancia.toStringAsFixed(1)} km\n${mercado["endereco"] ?? ""}',
+                                ),
+                                trailing: Icon(Icons.arrow_forward_ios),
                               ),
                             );
                           },
