@@ -26,8 +26,19 @@ class DashboardController {
         currentLocation.latitude ?? 0.0,
         currentLocation.longitude ?? 0.0,
       );
+      if (placemarks.isEmpty) return 'Cidade não encontrada';
 
-      return placemarks.first.locality ?? 'Cidade não encontrada';
+      final place = placemarks.first;
+
+      final city = place.locality?.isNotEmpty == true
+          ? place.locality!
+          : place.subAdministrativeArea?.isNotEmpty == true
+          ? place.subAdministrativeArea!
+          : place.administrativeArea?.isNotEmpty == true
+          ? place.administrativeArea!
+          : place.country ?? 'Cidade não encontrada';
+
+      return city;
     } catch (e) {
       return 'Erro ao localizar';
     }

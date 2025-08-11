@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'create_user_page.dart'; // importa a página de criação
 
 class ProfilePage extends StatefulWidget {
   final List<String> categoriasSelecionadas;
@@ -125,9 +126,9 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true, // Faz o corpo "estender" atrás do appbar
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Transparente para ver o fundo
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('Perfil'),
         centerTitle: true,
@@ -149,9 +150,7 @@ class _ProfilePageState extends State<ProfilePage>
               margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(
-                  0.85,
-                ), // Fundo branco translúcido
+                color: Colors.white.withOpacity(0.85),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -246,47 +245,104 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
                           'Categorias de Estabelecimento:',
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepOrange[700],
+                            letterSpacing: 0.8,
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Expanded(
-                        child: ListView(
-                          children: categorias.keys.map((categoria) {
-                            return CheckboxListTile(
-                              title: Text(
-                                categoria[0].toUpperCase() +
-                                    categoria.substring(1),
-                              ),
-                              value: categorias[categoria],
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  categorias[categoria] = value ?? false;
-                                });
-                              },
-                            );
-                          }).toList(),
+                      Container(
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orange.shade200.withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: ListView(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            children: categorias.keys.map((categoria) {
+                              return CheckboxListTile(
+                                activeColor: Colors.deepOrange,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                title: Text(
+                                  categoria[0].toUpperCase() +
+                                      categoria.substring(1),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                value: categorias[categoria],
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    categorias[categoria] = value ?? false;
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.save),
-                        label: const Text('Salvar Preferências'),
-                        onPressed: _salvarPreferencias,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 14,
+                      const SizedBox(height: 24),
+                      if (widget.funcao == 'ADM') ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.person_add),
+                            label: const Text('Criar Novo Usuário'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepOrange.shade700,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 5,
+                              shadowColor: Colors.deepOrangeAccent.shade100,
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CreateUserPage(),
+                                ),
+                              );
+                            },
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.save),
+                          label: const Text('Salvar Preferências'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange.shade600,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 6,
+                            shadowColor: Colors.orangeAccent.shade100,
                           ),
+                          onPressed: _salvarPreferencias,
                         ),
                       ),
                     ],
@@ -307,7 +363,6 @@ class BackgroundImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Ocupa toda a tela incluindo atrás do AppBar
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage("assets/images/fundo-login.jpeg"),
