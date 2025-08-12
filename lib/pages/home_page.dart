@@ -64,7 +64,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadCidade() async {
     final cidade = await _controller.getCityName();
-    print('Cidade obtida: $cidade');
     setState(() => cidadeAtual = cidade);
   }
 

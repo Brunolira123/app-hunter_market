@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'create_user_page.dart'; // importa a página de criação
+import 'create_user_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final List<String> categoriasSelecionadas;
@@ -32,7 +32,6 @@ class _ProfilePageState extends State<ProfilePage>
   final picker = ImagePicker();
 
   late Map<String, bool> categorias;
-
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -62,7 +61,6 @@ class _ProfilePageState extends State<ProfilePage>
     _scaleAnimation = Tween<double>(begin: 0.9, end: 1).animate(_fadeAnimation);
 
     _carregarPreferencias();
-
     _animationController.forward();
   }
 
@@ -125,6 +123,11 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    final larguraTela = MediaQuery.of(context).size.width;
+    final alturaTela = MediaQuery.of(context).size.height;
+    final paddingBase = larguraTela * 0.05;
+    final fontBase = larguraTela * 0.045;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -146,206 +149,224 @@ class _ProfilePageState extends State<ProfilePage>
         children: [
           const BackgroundImage(),
           SafeArea(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.85),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            child: SingleChildScrollView(
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  margin: EdgeInsets.symmetric(
+                    horizontal: paddingBase,
+                    vertical: 16,
                   ),
-                ],
-              ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: _escolherFoto,
-                        child: CircleAvatar(
-                          radius: 60,
-                          backgroundImage: _fotoPerfil != null
-                              ? FileImage(_fotoPerfil!)
-                              : (widget.imagemUrl.isNotEmpty
-                                        ? NetworkImage(widget.imagemUrl)
-                                        : const AssetImage(
-                                            'assets/default_avatar.png',
-                                          ))
-                                    as ImageProvider,
-                          child: _fotoPerfil == null && widget.imagemUrl.isEmpty
-                              ? const Icon(
-                                  Icons.camera_alt,
-                                  size: 36,
-                                  color: Colors.white,
-                                )
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        widget.nome,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.email,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Organização / Unidade',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.organizacao,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Função / Cargo',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.funcao,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Categorias de Estabelecimento:',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepOrange[700],
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        height: 180,
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.orange.shade200.withOpacity(0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: ListView(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            children: categorias.keys.map((categoria) {
-                              return CheckboxListTile(
-                                activeColor: Colors.deepOrange,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                title: Text(
-                                  categoria[0].toUpperCase() +
-                                      categoria.substring(1),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                value: categorias[categoria],
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    categorias[categoria] = value ?? false;
-                                  });
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      if (widget.funcao == 'ADM') ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.person_add),
-                            label: const Text('Criar Novo Usuário'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepOrange.shade700,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 5,
-                              shadowColor: Colors.deepOrangeAccent.shade100,
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => CreateUserPage(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.save),
-                          label: const Text('Salvar Preferências'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange.shade600,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 6,
-                            shadowColor: Colors.orangeAccent.shade100,
-                          ),
-                          onPressed: _salvarPreferencias,
-                        ),
+                  padding: EdgeInsets.all(paddingBase),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
+                  ),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: _escolherFoto,
+                            child: CircleAvatar(
+                              radius: larguraTela * 0.15,
+                              backgroundImage: _fotoPerfil != null
+                                  ? FileImage(_fotoPerfil!)
+                                  : (widget.imagemUrl.isNotEmpty
+                                            ? NetworkImage(widget.imagemUrl)
+                                            : const AssetImage(
+                                                'assets/default_avatar.png',
+                                              ))
+                                        as ImageProvider,
+                              child:
+                                  _fotoPerfil == null &&
+                                      widget.imagemUrl.isEmpty
+                                  ? const Icon(
+                                      Icons.camera_alt,
+                                      size: 36,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          SizedBox(height: alturaTela * 0.02),
+                          Text(
+                            widget.nome,
+                            style: TextStyle(
+                              fontSize: fontBase + 4,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: alturaTela * 0.01),
+                          Text(
+                            widget.email,
+                            style: TextStyle(
+                              fontSize: fontBase - 2,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          SizedBox(height: alturaTela * 0.03),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Organização / Unidade',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: fontBase,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  widget.organizacao,
+                                  style: TextStyle(
+                                    fontSize: fontBase - 1,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Função / Cargo',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: fontBase,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  widget.funcao,
+                                  style: TextStyle(
+                                    fontSize: fontBase - 1,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: alturaTela * 0.03),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Categorias de Estabelecimento:',
+                              style: TextStyle(
+                                fontSize: fontBase + 2,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepOrange[700],
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            height: alturaTela * 0.25,
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.orange.shade200.withOpacity(
+                                    0.4,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: ListView(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                children: categorias.keys.map((categoria) {
+                                  return CheckboxListTile(
+                                    activeColor: Colors.deepOrange,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
+                                    title: Text(
+                                      categoria[0].toUpperCase() +
+                                          categoria.substring(1),
+                                      style: TextStyle(
+                                        fontSize: fontBase - 1,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    value: categorias[categoria],
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        categorias[categoria] = value ?? false;
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: alturaTela * 0.03),
+                          if (widget.funcao == 'ADM') ...[
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.person_add),
+                                label: const Text('Criar Novo Usuário'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.deepOrange.shade700,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: alturaTela * 0.02,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 5,
+                                  shadowColor: Colors.deepOrangeAccent.shade100,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CreateUserPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(height: alturaTela * 0.02),
+                          ],
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.save),
+                              label: const Text('Salvar Preferências'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange.shade600,
+                                padding: EdgeInsets.symmetric(
+                                  vertical: alturaTela * 0.02,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 6,
+                                shadowColor: Colors.orangeAccent.shade100,
+                              ),
+                              onPressed: _salvarPreferencias,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
